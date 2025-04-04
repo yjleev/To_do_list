@@ -32,33 +32,20 @@ function App() {
   const [selectTodo, setSelectTodo] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [tab, setTab] = useState<"all" | "incomplete" | "complete">("all");
+  const [selected, setSelected] = useState<number[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, [level]);
 
-  const toggle = () => setTheme((prev) => (prev === light ? dark : light));
-
-  // const addTodo = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //   if (e.key === "Enter" && input.trim()) {
-  //     const newTodo = {
-  //       id: Date.now(),
-  //       text: input,
-  //       level,
-  //       time: Date.now(),
-  //       done: false,
-  //     };
-  //     setTodos([...todos, newTodo]);
-  //     setInput("");
-  //   }
-  // };      원래
+  const toggle = () => setTheme((before) => (before === light ? dark : light));
 
   const addTodo = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       if (editMode && selectTodo !== null) {
-        setTodos((prevTodos) =>
-          prevTodos.map((todo) =>
+        setTodos((before) =>
+          before.map((todo) =>
             todo.id === selectTodo ? { ...todo, text: input, level } : todo
           )
         );
@@ -68,7 +55,7 @@ function App() {
       } else if (input.trim()) {
         const newTodo = {
           id: Date.now(),
-          text: input,
+          text: input,  
           level,
           time: Date.now(),
           done: false,
@@ -79,7 +66,7 @@ function App() {
     }
   };
 
-  const sortTodos = [...todos].sort((a, b) => {
+  const sortTodos = [...todos].sort((a, b) => {   /* sort문 배열 계속 반복 */
     if (sort === "latest") return b.time - a.time;
     if (sort === "oldest") return a.time - b.time;
     if (sort === "high") return b.level - a.level;
@@ -95,15 +82,15 @@ function App() {
   };
 
   useEffect(() => {
-    const close = () => setOn(false);
+    const close = () => setOn(false); /* 같은 함수를 조작해야함 */
     document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
+    return () => document.removeEventListener("click", close);  
   }, []);
 
   const done = () => {
     if (selectTodo !== null) {
-      setTodos((prevTodos) =>
-        prevTodos.map((todo) =>
+      setTodos((before) =>
+        before.map((todo) =>
           todo.id === selectTodo ? { ...todo, done: !todo.done } : todo
         )
       );
@@ -126,17 +113,51 @@ function App() {
 
   const remove = () => {
     if (selectTodo !== null) {
-      setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== selectTodo));
+      setTodos((before) => before.filter((todo) => todo.id !== selectTodo));
       setOn(false);
       setSelectTodo(null);
     }
   };
 
-  const filter = sortTodos.filter((todo) => {
+  const filter = sortTodos.filter((todo) => {   /* 여러 번 */
     if (tab === "incomplete") return !todo.done;
     if (tab === "complete") return todo.done;
     return true;
   });
+
+  const toggleSelect= (id: number) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((todoId) => todoId !== id) : [...prev, id]
+    );
+  };
+
+  useEffect(() => {
+    setSelected([]);
+  }, [editMode])
+
+  const selectAll = () => {
+    if (selected.length === filter.length) {
+      setSelected([]);
+    } else {
+      setSelected(filter.map((todo) => todo.id));
+    }
+  };
+
+  const doneSelected = () => {
+    setTodos((before) =>
+      before.map((todo) =>
+        selected.includes(todo.id) ? { ...todo, done: !todo.done } : todo
+      )
+    );
+    setSelected([]);
+    setOn(false);
+  };
+  
+  const removeSelected = () => {
+    setTodos((before) => before.filter((todo) => !selected.includes(todo.id)));
+    setSelected([]);
+    setOn(false);
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -151,11 +172,11 @@ function App() {
             onKeyDown={addTodo}
           />
           <select onChange={(e) => setLevel(Number(e.target.value))} value={level}>
-            {[1, 2, 3, 4, 5].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
           </select>
         </div>
         <div className="sort_options">
@@ -169,10 +190,24 @@ function App() {
           <div onClick={() => setTab("all")} className={tab === "all" ? "active" : ""}>전체</div>
           <div onClick={() => setTab("incomplete")} className={tab === "incomplete" ? "active" : ""}>미완료</div>
           <div onClick={() => setTab("complete")} className={tab === "complete" ? "active" : ""}>완료</div>
+          {editMode ? (
+            <ul className="edit">
+              <li onClick={() => selectAll()}>전체선택</li>
+              <li onClick={() => setEditMode(false)}>취소</li>
+            </ul>
+          ) : (
+            <ul className="edit">
+              <li onClick={() => setEditMode(true)}>편집</li>
+            </ul>
+          )}
         </div>
         <div className="list">
           {filter.map((todo) => (
-            <div key={todo.id} className="todo" onContextMenu={(e) => onOff(e, todo.id)} style={{ opacity: todo.done ? 0.5 : 1 }}>
+            <div key={todo.id} 
+            className="todo"
+            onContextMenu={(e) => onOff(e, todo.id)} 
+            onClick={() => editMode && toggleSelect(todo.id)} 
+            style={{ opacity: todo.done ? 0.5 : 1, backgroundColor: selected.includes(todo.id) ? "#ddd" : ""}}>
               <p>
                 {todo.text} / 중요도: {todo.level} / {new Date(todo.time).toLocaleString()}
               </p>
@@ -184,6 +219,12 @@ function App() {
             <span onClick={done}>완료</span>
             <span onClick={edit}>수정</span>
             <span onClick={remove}>삭제</span>
+          </div>
+        )}
+        {on && editMode && selected.length > 0 && (
+          <div className="setting" style={{ top: position.y, left: position.x }}>
+            <span onClick={doneSelected}>완료</span>
+            <span onClick={removeSelected}>삭제</span>
           </div>
         )}
       </Container>
