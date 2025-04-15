@@ -1,25 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
-import styled, { ThemeProvider } from "styled-components";
-
-const light = {
-  background: "#eee",
-  color: "#333",
-};
-
-const dark = {
-  background: "#333",
-  color: "#fff",
-};
-
-const Container = styled.div<{ theme: { background: string; color: string } }>`
-  background-color: ${(props) => props.theme.background};
-  color: ${(props) => props.theme.color};
-  width: 500px;
-  padding: 20px;
-  margin: 50px auto;
-  border-radius: 10px;
-`;
+import { ThemeProvider } from "styled-components";
+import {light, dark, Container} from "./components/theme"
 
 function App() {
   const [theme, setTheme] = useState(light);
