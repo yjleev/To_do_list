@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useState } from "react";
 
 const light = {
   background: "#eee",
@@ -19,4 +20,12 @@ const Container = styled.div<{ theme: { background: string; color: string } }>`
   border-radius: 10px;
 `;
 
-export {light, dark, Container}
+function useMode () {
+    const [theme, setTheme] = useState(light);
+    
+    const toggle = () => setTheme((before) => (before === light ? dark : light));
+
+    return {toggle, theme}
+}
+
+export {Container, useMode}

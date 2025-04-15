@@ -1,52 +1,36 @@
 import { useState, useRef, useEffect } from "react";
 import "./App.css";
 import { ThemeProvider } from "styled-components";
-import {light, dark, Container} from "./components/theme"
+import {Container, useMode} from "./components/theme"
+import {useTodo} from "./components/createTodo"
 
 function App() {
-  const [theme, setTheme] = useState(light);
-  const [todos, setTodos] = useState<{ id: number; text: string; level: number; time: number; done: boolean  }[]>([]);
-  const [input, setInput] = useState("");
-  const [level, setLevel] = useState(1);
   const [sort, setSort] = useState<"latest" | "oldest" | "high" | "low">("latest");
   const [on, setOn] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [selectTodo, setSelectTodo] = useState<number | null>(null);
-  const [editMode, setEditMode] = useState(false);
   const [tab, setTab] = useState<"all" | "incomplete" | "complete">("all");
   const [selected, setSelected] = useState<number[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    todos,
+    setTodos,
+    input,
+    setInput,
+    level,
+    setLevel,
+    selectTodo,
+    setSelectTodo,
+    editMode,
+    setEditMode,
+    addTodo
+  } = useTodo();
+
+  const {toggle, theme} = useMode();
+
   useEffect(() => {
     inputRef.current?.focus();
   }, [level]);
-
-  const toggle = () => setTheme((before) => (before === light ? dark : light));
-
-  const addTodo = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      if (editMode && selectTodo !== null) {
-        setTodos((before) =>
-          before.map((todo) =>
-            todo.id === selectTodo ? { ...todo, text: input, level } : todo
-          )
-        );
-        setEditMode(false);
-        setSelectTodo(null);
-        setInput("");
-      } else if (input.trim()) {
-        const newTodo = {
-          id: Date.now(),
-          text: input,  
-          level,
-          time: Date.now(),
-          done: false,
-        };
-        setTodos([...todos, newTodo]);
-        setInput("");
-      }
-    }
-  };
 
   const sortTodos = [...todos].sort((a, b) => {   /* sort문 배열 계속 반복 */
     if (sort === "latest") return b.time - a.time;
